@@ -2,6 +2,7 @@ using System;
 using System.Runtime.Versioning;
 using System.Threading;
 using System.Threading.Tasks;
+using PPgram.Config;
 using PPgram.Logging;
 using PPgram.Network;
 
@@ -10,18 +11,18 @@ namespace PPgram.State;
 [SupportedOSPlatform("linux")]
 [SupportedOSPlatform("macos")]
 [SupportedOSPlatform("windows")]
-public sealed class BackgroundState : IAsyncDisposable
+public sealed class BackgroundState(AppConfig config) : IAsyncDisposable
 {
     private readonly CancellationTokenSource _globalCancellation = new();
     private CancellationTokenSource? _cts;
     private Task? _loopTask;
 
-    public BackgroundState()
-    {
-        Client = new PPClient(new PPTransport("127.0.0.1", 4433));
-    }
-
-    public PPClient Client { get; }
+    public PPClient Client { get; } = new PPClient(new PPTransport(
+            config.Host,
+            config.Port,
+            config.Alpn,
+            config.ServerName,
+            config.InsecureSkipCertificateValidation));
     public CancellationToken GlobalCancellationToken => _globalCancellation.Token;
 
     public void RequestCancellation()

@@ -4,6 +4,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform;
+using PPgram.Config;
 using PPgram.Logging;
 using PPgram.State;
 using PPgram.ViewModels;
@@ -20,7 +21,7 @@ namespace PPgram;
 [SupportedOSPlatform("windows")]
 public partial class App : Application
 {
-    private readonly BackgroundState _background = new();
+    private BackgroundState? _background;
     private IClassicDesktopStyleApplicationLifetime? _desktop;
     private TrayIcon? _trayIcon;
     private MainWindow? _mainWindow;
@@ -35,6 +36,8 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        var config = AppConfig.LoadOrCreate();
+        _background = new BackgroundState(config);
         AppLog.Info("App", "Framework initialization completed; starting background state.");
         _background.StartAsync().GetAwaiter().GetResult();
 
@@ -65,6 +68,11 @@ public partial class App : Application
 
     private MainWindow BuildMainWindow()
     {
+        if (_background is null)
+        {
+            throw new InvalidOperationException("Background state must be initialized before creating the main window.");
+        }
+
         var window = new MainWindow
         {
             DataContext = new MainWindowViewModel(_background),
@@ -128,7 +136,7 @@ public partial class App : Application
         }
         _exitCleanupStarted = true;
         _isExiting = true;
-        _background.RequestCancellation();
+        _background?.RequestCancellation();
         AppLog.Info("App", "Exit requested.");
 
         try
@@ -144,13 +152,19 @@ public partial class App : Application
 
         _ = Task.Run(async () =>
         {
+            var background = _background;
+            if (background is null)
+            {
+                return;
+            }
+
             try
             {
-                await _background.StopAsync(TimeSpan.FromSeconds(2));
+                await background.StopAsync(TimeSpan.FromSeconds(5));
             }
-            catch
+            catch (Exception ex)
             {
-                AppLog.Error("App", "Background stop failed during exit.");
+                AppLog.Error("App", "Background stop failed during exit.", ex);
             }
             finally
             {
@@ -170,7 +184,7 @@ public partial class App : Application
 
         try
         {
-            _background.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            _background?.DisposeAsync().AsTask().GetAwaiter().GetResult();
         }
         catch (Exception ex)
         {

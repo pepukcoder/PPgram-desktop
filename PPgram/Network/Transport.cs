@@ -59,6 +59,8 @@ public sealed class PPTransport(
         {
             RemoteEndPoint = new DnsEndPoint(_host, _port),
             ClientAuthenticationOptions = tlsOptions,
+            DefaultCloseErrorCode = 0,
+            DefaultStreamErrorCode = 0,
         };
 
         AppLog.Info("PPTransport", $"Connecting to {_host}:{_port} (alpn={_alpn}, serverName={_serverName}).");
