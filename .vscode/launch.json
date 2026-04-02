@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "PPgram: Build and Debug",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build PPgram",
+      "program": "${workspaceFolder}/PPgram/bin/Debug/net10.0/PPgram",
+      "cwd": "${workspaceFolder}/PPgram",
+      "stopAtEntry": false,
+      "console": "internalConsole"
+    }
+  ]
+}
