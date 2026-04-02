@@ -1,8 +1,10 @@
-﻿namespace PPgram.ViewModels;
+﻿using PPgram.State;
 
-public partial class MainWindowViewModel : ViewModelBase
+namespace PPgram.ViewModels;
+
+public partial class MainWindowViewModel(BackgroundState background) : ViewModelBase
 {
-#pragma warning disable CA1822 // Mark members as static
+    private readonly BackgroundState _background = background;
+
     public string Greeting => "Welcome to Avalonia!";
-#pragma warning restore CA1822 // Mark members as static
 }

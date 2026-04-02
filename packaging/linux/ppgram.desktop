@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=PPgram
+Comment=PPgram desktop client
+Exec=ppgram
+Icon=ppgram
+Terminal=false
+Categories=Network;Chat;
+StartupWMClass=PPgram
