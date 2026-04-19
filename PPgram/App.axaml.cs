@@ -3,12 +3,10 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
-using Avalonia.Platform;
+using PPgram.Application;
 using PPgram.Config;
 using PPgram.Logging;
 using PPgram.State;
-using PPgram.ViewModels;
-using PPgram.Views;
 using System;
 using System.Runtime.Versioning;
 using System.Threading;
@@ -19,15 +17,10 @@ namespace PPgram;
 [SupportedOSPlatform("linux")]
 [SupportedOSPlatform("macos")]
 [SupportedOSPlatform("windows")]
-public partial class App : Application
+public partial class App : Avalonia.Application
 {
-    private BackgroundState? _background;
-    private IClassicDesktopStyleApplicationLifetime? _desktop;
-    private TrayIcon? _trayIcon;
-    private MainWindow? _mainWindow;
-    private bool _isExiting;
-    private bool _exitCleanupStarted;
-    private int _backgroundDisposeStarted;
+    private readonly CancellationTokenSource _cts = new();
+    private AppLifecycle? _appLifecycle;
 
     public override void Initialize()
     {
@@ -37,158 +30,38 @@ public partial class App : Application
     public override void OnFrameworkInitializationCompleted()
     {
         var config = AppConfig.LoadOrCreate();
-        _background = new BackgroundState(config);
-        AppLog.Info("App", "Framework initialization completed; starting background state.");
-        _background.StartAsync().GetAwaiter().GetResult();
+        var background = new BackgroundState(config, _cts.Token);
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            _desktop = desktop;
             desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
             // Line below is needed to remove Avalonia data validation.
             // Without this line you will get duplicate validations from both Avalonia and CT
             BindingPlugins.DataValidators.RemoveAt(0);
-            desktop.Exit += OnDesktopExit;
 
-            _trayIcon = BuildTrayIcon();
-            _mainWindow = BuildMainWindow();
-            desktop.MainWindow = _mainWindow;
+            _appLifecycle = new AppLifecycle(desktop, _cts, background);
+            _appLifecycle.Initialize();
         }
+
+        _ = InitializeBackgroundAsync(background);
 
         base.OnFrameworkInitializationCompleted();
     }
 
-    private void OnDesktopExit(object? sender, ControlledApplicationLifetimeExitEventArgs e)
+    private async Task InitializeBackgroundAsync(BackgroundState background)
     {
-        AppLog.Info("App", "Desktop exit event.");
-        _trayIcon?.Dispose();
-        DisposeBackgroundOnce();
-    }
-
-    private MainWindow BuildMainWindow()
-    {
-        if (_background is null)
-        {
-            throw new InvalidOperationException("Background state must be initialized before creating the main window.");
-        }
-
-        var window = new MainWindow
-        {
-            DataContext = new MainWindowViewModel(_background),
-        };
-        window.Closing += OnMainWindowClosing;
-        return window;
-    }
-
-    private TrayIcon BuildTrayIcon()
-    {
-        var menu = new NativeMenu();
-
-        var openItem = new NativeMenuItem("Open");
-        openItem.Click += (_, _) => ShowMainWindow();
-        menu.Items.Add(openItem);
-
-        menu.Items.Add(new NativeMenuItemSeparator());
-
-        var exitItem = new NativeMenuItem("Exit");
-        exitItem.Click += (_, _) => ExitApplication();
-        menu.Items.Add(exitItem);
-
-        return new TrayIcon
-        {
-            Icon = new WindowIcon(AssetLoader.Open(new Uri("avares://PPgram/Assets/icon.ico"))),
-            ToolTipText = "PPgram",
-            Menu = menu,
-            IsVisible = true,
-        };
-    }
-
-    private void OnMainWindowClosing(object? sender, WindowClosingEventArgs e)
-    {
-        if (_isExiting)
-        {
-            return;
-        }
-
-        e.Cancel = true;
-        _mainWindow?.Hide();
-    }
-
-    private void ShowMainWindow()
-    {
-        if (_mainWindow is null)
-        {
-            _mainWindow = BuildMainWindow();
-            _desktop?.MainWindow = _mainWindow;
-        }
-
-        _mainWindow.Show();
-        _mainWindow.WindowState = WindowState.Normal;
-        _mainWindow.Activate();
-    }
-
-    private void ExitApplication()
-    {
-        if (_exitCleanupStarted)
-        {
-            return;
-        }
-        _exitCleanupStarted = true;
-        _isExiting = true;
-        _background?.RequestCancellation();
-        AppLog.Info("App", "Exit requested.");
-
         try
         {
-            _trayIcon?.IsVisible = false;
-            _mainWindow?.Close();
-            _desktop?.Shutdown();
+            await background.InitializeAsync(_cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            AppLog.Info("App", "Background initialization canceled.");
         }
         catch (Exception ex)
         {
-            AppLog.Error("App", "Error during exit sequence.", ex);
-        }
-
-        _ = Task.Run(async () =>
-        {
-            var background = _background;
-            if (background is null)
-            {
-                return;
-            }
-
-            try
-            {
-                await background.StopAsync(TimeSpan.FromSeconds(5));
-            }
-            catch (Exception ex)
-            {
-                AppLog.Error("App", "Background stop failed during exit.", ex);
-            }
-            finally
-            {
-                DisposeBackgroundOnce();
-            }
-        });
-
-        Environment.ExitCode = 0;
-    }
-
-    private void DisposeBackgroundOnce()
-    {
-        if (Interlocked.Exchange(ref _backgroundDisposeStarted, 1) == 1)
-        {
-            return;
-        }
-
-        try
-        {
-            _background?.DisposeAsync().AsTask().GetAwaiter().GetResult();
-        }
-        catch (Exception ex)
-        {
-            AppLog.Error("App", "Background dispose failed.", ex);
+            AppLog.Error("App", "Background initialization failed.", ex);
         }
     }
 }

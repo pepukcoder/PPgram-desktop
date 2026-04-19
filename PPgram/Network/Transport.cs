@@ -31,55 +31,74 @@ public sealed class PPTransport(
     private readonly string _alpn = alpn;
     private readonly string _serverName = string.IsNullOrWhiteSpace(serverName) ? host : serverName;
     private readonly bool _insecureSkipCertificateValidation = insecureSkipCertificateValidation;
+    private readonly SemaphoreSlim _lifecycleGate = new(1, 1);
 
     private QuicConnection? _connection;
+    private bool _disposed;
 
     public bool IsConnected => _connection is not null;
 
     public async Task ConnectAsync(CancellationToken cancellationToken = default)
     {
-        if (_connection is not null)
+        await _lifecycleGate.WaitAsync(cancellationToken);
+        try
         {
-            AppLog.Info("PPTransport", "Connect skipped: already connected.");
-            return;
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            
+            if (_connection is not null)
+            {
+                return;
+            }
+
+            var tlsOptions = new SslClientAuthenticationOptions
+            {
+                ApplicationProtocols = [new SslApplicationProtocol(_alpn)],
+                TargetHost = _serverName,
+            };
+
+            if (_insecureSkipCertificateValidation)
+            {
+                tlsOptions.RemoteCertificateValidationCallback = static (_, _, _, _) => true;
+            }
+
+            var options = new QuicClientConnectionOptions
+            {
+                RemoteEndPoint = new DnsEndPoint(_host, _port),
+                ClientAuthenticationOptions = tlsOptions,
+                DefaultCloseErrorCode = 0,
+                DefaultStreamErrorCode = 0,
+            };
+
+            AppLog.Info("PPTransport", $"Connecting to {_host}:{_port} (alpn={_alpn}, serverName={_serverName}).");
+            _connection = await QuicConnection.ConnectAsync(options, cancellationToken);
+            AppLog.Info("PPTransport", "Connected.");
         }
-
-        var tlsOptions = new SslClientAuthenticationOptions
+        finally
         {
-            ApplicationProtocols = [new SslApplicationProtocol(_alpn)],
-            TargetHost = _serverName,
-        };
-
-        if (_insecureSkipCertificateValidation)
-        {
-            tlsOptions.RemoteCertificateValidationCallback = static (_, _, _, _) => true;
+            _lifecycleGate.Release();
         }
-
-        var options = new QuicClientConnectionOptions
-        {
-            RemoteEndPoint = new DnsEndPoint(_host, _port),
-            ClientAuthenticationOptions = tlsOptions,
-            DefaultCloseErrorCode = 0,
-            DefaultStreamErrorCode = 0,
-        };
-
-        AppLog.Info("PPTransport", $"Connecting to {_host}:{_port} (alpn={_alpn}, serverName={_serverName}).");
-        _connection = await QuicConnection.ConnectAsync(options, cancellationToken);
-        AppLog.Info("PPTransport", "Connected.");
     }
 
     public async Task DisconnectAsync(long errorCode = 0, CancellationToken cancellationToken = default)
     {
-        if (_connection is null)
+        QuicConnection? connection;
+        await _lifecycleGate.WaitAsync(cancellationToken);
+        try
         {
-            AppLog.Info("PPTransport", "Disconnect skipped: no active connection.");
-            return;
+            connection = Interlocked.Exchange(ref _connection, null);
+            if (connection is null)
+            {
+                AppLog.Info("PPTransport", "Disconnect skipped: no active connection.");
+                return;
+            }
+        }
+        finally
+        {
+            _lifecycleGate.Release();
         }
 
         AppLog.Info("PPTransport", $"Disconnecting (errorCode={errorCode}).");
-        await _connection.CloseAsync(errorCode, cancellationToken);
-        await _connection.DisposeAsync();
-        _connection = null;
+        await CloseAndDisposeConnectionAsync(connection, errorCode, cancellationToken);
         AppLog.Info("PPTransport", "Disconnected.");
     }
 
@@ -90,6 +109,8 @@ public sealed class PPTransport(
         where TRequest : class, IMessage
         where TResponse : class, IMessage<TResponse>, new()
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+
         var connection = _connection ?? throw new InvalidOperationException("PPClient is not connected.");
         if (string.IsNullOrWhiteSpace(op))
         {
@@ -128,36 +149,54 @@ public sealed class PPTransport(
         return (responseEnvelope, response);
     }
 
-    public ValueTask DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
-        if (_connection is null)
+        await _lifecycleGate.WaitAsync();
+        QuicConnection? connection;
+        try
         {
-            return ValueTask.CompletedTask;
+            if (_disposed) return;
+            _disposed = true;
+            connection = Interlocked.Exchange(ref _connection, null);
         }
-
-        return new ValueTask(DisposeCoreAsync());
-    }
-
-    private async Task DisposeCoreAsync()
-    {
-        var connection = _connection;
-        _connection = null;
+        finally
+        {
+            _lifecycleGate.Release();
+        }
 
         if (connection is null)
         {
             return;
         }
 
+        await CloseAndDisposeConnectionAsync(connection, 0, CancellationToken.None);
+    }
+
+    private static async Task CloseAndDisposeConnectionAsync(QuicConnection conn, long errorCode, CancellationToken ct)
+    {
         try
         {
-            await connection.CloseAsync(0);
+            await conn.CloseAsync(errorCode, ct);
+        }
+        catch (OperationCanceledException)
+        {
+            AppLog.Info("PPTransport", "CloseAsync canceled.");
         }
         catch (Exception ex)
         {
-            AppLog.Error("PPTransport", "Error while closing connection during dispose.", ex);
+            AppLog.Error("PPTransport", "Error while closing QUIC connection.", ex);
         }
-
-        await connection.DisposeAsync();
+        finally
+        {
+            try
+            {
+                await conn.DisposeAsync();
+            }
+            catch (Exception ex)
+            {
+                AppLog.Error("PPTransport", "Error while disposing QUIC connection.", ex);
+            }
+        }
     }
 
     private static async Task WriteFrameAsync(QuicStream stream, byte frameType, byte[] payload, CancellationToken cancellationToken)
