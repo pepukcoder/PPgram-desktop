@@ -71,13 +71,16 @@ public sealed class ShellController(IClassicDesktopStyleApplicationLifetime desk
         exitItem.Click += async (_, _) => await RequestExitAsync();
         menu.Items.Add(exitItem);
 
-        return new TrayIcon
+        var trayIcon = new TrayIcon
         {
             Icon = new WindowIcon(AssetLoader.Open(new Uri("avares://PPgram/Assets/icon.ico"))),
             ToolTipText = "PPgram",
             Menu = menu,
             IsVisible = true,
         };
+
+        trayIcon.Clicked += (_, _) => ShowMainWindow();
+        return trayIcon;
     }
 
     private void OnMainWindowClosing(object? sender, WindowClosingEventArgs e)
