@@ -8,8 +8,23 @@
     <Application.DataTemplates>
         <local:ViewLocator/>
     </Application.DataTemplates>
+
+    <Application.Resources>
+        <ResourceDictionary>
+            <FontFamily x:Key="Jetbrains">/Assets/Fonts#JetBrains Mono</FontFamily>
+
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://PPgram/Styles/ColorScheme.axaml" />
+                <ResourceInclude Source="avares://PPgram/Styles/FocusTheme.axaml" />
+                <ResourceInclude Source="avares://PPgram/Styles/Controls/PPButtonTheme.axaml" />
+                <ResourceInclude Source="avares://PPgram/Styles/Controls/PPInputFieldTheme.axaml" />
+                <ResourceInclude Source="avares://PPgram/Styles/Controls/CornerContainerTheme.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
   
     <Application.Styles>
-        <FluentTheme />
+        <SimpleTheme />
+        <StyleInclude Source="avares://PPgram/Styles/Focus.axaml" />
     </Application.Styles>
 </Application>

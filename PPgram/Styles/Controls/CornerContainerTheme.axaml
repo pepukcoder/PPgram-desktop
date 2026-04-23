@@ -1,0 +1,53 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:controls="using:PPgram.Controls">
+    <ControlTheme x:Key="{x:Type controls:CornerContainer}" TargetType="controls:CornerContainer">
+        <Setter Property="OutlineBrush" Value="{DynamicResource Brush.Outline}"/>
+        <Setter Property="CornerColor" Value="White"/>
+        <Setter Property="CornerWidth" Value="28"/>
+        <Setter Property="CornerHeight" Value="28"/>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Grid>
+                    <Border BorderBrush="{TemplateBinding OutlineBrush}"
+                            BorderThickness="1" />
+
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      ContentTemplate="{TemplateBinding ContentTemplate}"
+                                      HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+
+                    <Grid IsHitTestVisible="False">
+                        <Border Width="{TemplateBinding CornerWidth}"
+                                Height="{TemplateBinding CornerHeight}"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Top"
+                                BorderBrush="{TemplateBinding CornerColor}"
+                                BorderThickness="1,1,0,0" />
+
+                        <Border Width="{TemplateBinding CornerWidth}"
+                                Height="{TemplateBinding CornerHeight}"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Top"
+                                BorderBrush="{TemplateBinding CornerColor}"
+                                BorderThickness="0,1,1,0" />
+
+                        <Border Width="{TemplateBinding CornerWidth}"
+                                Height="{TemplateBinding CornerHeight}"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Bottom"
+                                BorderBrush="{TemplateBinding CornerColor}"
+                                BorderThickness="1,0,0,1" />
+
+                        <Border Width="{TemplateBinding CornerWidth}"
+                                Height="{TemplateBinding CornerHeight}"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Bottom"
+                                BorderBrush="{TemplateBinding CornerColor}"
+                                BorderThickness="0,0,1,1" />
+                    </Grid>
+                </Grid>
+            </ControlTemplate>
+        </Setter>
+    </ControlTheme>
+</ResourceDictionary>

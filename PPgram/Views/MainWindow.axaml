@@ -7,14 +7,31 @@
         x:Class="PPgram.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/icon.ico"
-        Title="PPgram">
+        Title="PPgram"
+        FontFamily="{DynamicResource Jetbrains}"
+        XYFocus.NavigationModes="Enabled"
+        XYFocus.UpNavigationStrategy="Projection"
+        XYFocus.DownNavigationStrategy="Projection"
+        XYFocus.LeftNavigationStrategy="Projection"
+        XYFocus.RightNavigationStrategy="Projection">
 
-    <Design.DataContext>
-        <!-- This only sets the DataContext for the previewer in an IDE,
-             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
-        <vm:MainWindowViewModel/>
-    </Design.DataContext>
+    <Grid>
+        <ContentControl Content="{Binding CurrentViewModel}" ZIndex="0"/>
 
-    <TextBlock Text="{Binding Greeting}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        <Border Background="#7A000000"
+                IsVisible="{Binding IsModalVisible}"
+                ZIndex="10">
+            <ContentControl Content="{Binding ModalViewModel}"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center" />
+        </Border>
+
+        <ContentControl Content="{Binding NotificationsViewModel}"
+                        IsVisible="{Binding IsNotificationsVisible}"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        Margin="16"
+                        ZIndex="20" />
+    </Grid>
 
 </Window>

@@ -1,0 +1,52 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:PPgram.Controls"
+             xmlns:vm="using:PPgram.ViewModels.Pages"
+             xmlns:svg="clr-namespace:Avalonia.Svg.Skia;assembly=Svg.Controls.Skia.Avalonia"
+             x:Class="PPgram.Views.Pages.LoginView"
+             x:DataType="vm:LoginViewModel"
+             Background="{DynamicResource Brush.Background}"
+             Foreground="{DynamicResource Brush.Foreground}"
+             FontFamily="{DynamicResource Jetbrains}">
+
+    <controls:CornerContainer VerticalAlignment="Center" HorizontalAlignment="Center"
+                              CornerColor="White" CornerWidth="28" CornerHeight="28">
+        <StackPanel MinWidth="300" MaxWidth="500" Margin="32">
+            <svg:Svg Path="avares://PPgram/Assets/logo_round.svg" Height="60" Width="60" />
+            <TextBlock Text="Welcome" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center"/>
+
+            <Panel Margin="0,16,0,4">
+                <TextBlock Text="Username" HorizontalAlignment="Left"/>
+                <TextBlock Text="{Binding UsernameError}"
+                           Foreground="{DynamicResource Brush.Error}"
+                           HorizontalAlignment="Right"
+                           IsVisible="{Binding HasUsernameError}"/>
+            </Panel>
+            <controls:PPInputField Text="{Binding Username}"
+                                   Placeholder="user_name"
+                                   Icon="@"
+                                   HasError="{Binding HasUsernameError}"/>
+
+            <Panel Margin="0,16,0,4">
+                <TextBlock Text="Password" HorizontalAlignment="Left"/>
+                <TextBlock Text="{Binding PasswordError}"
+                           Foreground="{DynamicResource Brush.Error}"
+                           HorizontalAlignment="Right"
+                           IsVisible="{Binding HasPasswordError}"/>
+            </Panel>
+            <controls:PPInputField Text="{Binding Password}"
+                                   Placeholder="********"
+                                   Secret="True"
+                                   HasError="{Binding HasPasswordError}"/>
+
+            <controls:PPButton Content="Login"
+                                Margin="0,16,0,4"
+                                Tone="Accent"
+                                Command="{Binding LoginCommand}" />
+            <controls:PPButton Content="Create account"
+                                Tone="Neutral"
+                                Command="{Binding OpenRegisterCommand}" />
+        </StackPanel>
+    </controls:CornerContainer>
+
+</UserControl>

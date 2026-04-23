@@ -1,0 +1,76 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:controls="using:PPgram.Controls">
+    <Design.PreviewWith>
+        <Panel Background="{DynamicResource Brush.Background}">
+            <StackPanel Spacing="8"
+                        Width="260"
+                        Margin="12">
+                <controls:PPInputField Placeholder="Email" FontSize="12"/>
+                <controls:PPInputField Placeholder="Username" Icon="@" FontSize="12" />
+                <controls:PPInputField Placeholder="Password" Icon="*" Secret="True" FontSize="12" />
+            </StackPanel>
+        </Panel>
+    </Design.PreviewWith>
+
+    <ControlTheme x:Key="{x:Type controls:PPInputField}" TargetType="controls:PPInputField">
+        <Setter Property="Background" Value="{DynamicResource Brush.Background}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Foreground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Outline}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="0" />
+        <Setter Property="FontFamily" Value="{DynamicResource Jetbrains}" />
+        <Setter Property="TextElement.FontFeatures" Value="liga=0,clig=0,calt=0" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{TemplateBinding CornerRadius}">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <ContentPresenter x:Name="IconPresenter"
+                                          Grid.Column="0"
+                                          Content="{TemplateBinding Icon}"
+                                          Margin="8,4,4,4"
+                                          VerticalAlignment="Center"
+                                          IsVisible="False" />
+
+                        <TextBox x:Name="InnerTextBox"
+                                 Grid.Column="1"
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 BorderBrush="Transparent"
+                                 Margin="8,4,8,4"
+                                 Text="{Binding Text, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                                 Watermark="{TemplateBinding Placeholder}"
+                                 PasswordChar="{TemplateBinding PasswordChar}"
+                                 Foreground="{TemplateBinding Foreground}"
+                                 CaretBrush="{TemplateBinding Foreground}"
+                                 SelectionBrush="{DynamicResource Brush.Selection}"
+                                 FontFamily="{TemplateBinding FontFamily}"
+                                 FontSize="{TemplateBinding FontSize}"
+                                 FontStyle="{TemplateBinding FontStyle}"
+                                 FontWeight="{TemplateBinding FontWeight}"
+                                 TextElement.FontFeatures="liga=0,clig=0,calt=0" />
+                    </Grid>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+
+        <Style Selector="^:has-icon /template/ TextBox#InnerTextBox">
+            <Setter Property="Margin" Value="0,4,8,4" />
+        </Style>
+
+        <Style Selector="^:has-icon /template/ ContentPresenter#IconPresenter">
+            <Setter Property="IsVisible" Value="True" />
+        </Style>
+
+        <Style Selector="^:error">
+            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Error}" />
+        </Style>
+
+        <Style Selector="^:focus-within">
+            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Focus}" />
+        </Style>
+    </ControlTheme>
+</ResourceDictionary>

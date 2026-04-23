@@ -1,0 +1,31 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Color x:Key="Color.Background">#0f0f0f</Color>
+    <Color x:Key="Color.Background.Light">#1b1b1b</Color>
+    <Color x:Key="Color.Outline">#313131</Color>
+    <Color x:Key="Color.Foreground">White</Color>
+    <Color x:Key="Color.Foreground.Secondary">LightGray</Color>
+    <Color x:Key="Color.PPgram.Accent">#3F86E7</Color>
+    <Color x:Key="Color.PPgram.Accent.Light">#5292E9</Color>
+    <Color x:Key="Color.Error">#FF4646</Color>
+    <Color x:Key="Color.Danger">#D93838</Color>
+
+    <SolidColorBrush x:Key="Brush.Background" Color="{DynamicResource Color.Background}"/>
+    <SolidColorBrush x:Key="Brush.Background.Light" Color="{DynamicResource Color.Background.Light}"/>
+    <SolidColorBrush x:Key="Brush.Outline" Color="{DynamicResource Color.Outline}"/>
+    <SolidColorBrush x:Key="Brush.Selection" Color="{DynamicResource Color.Outline}"/>
+    <SolidColorBrush x:Key="Brush.Foreground" Color="{DynamicResource Color.Foreground}"/>
+    <SolidColorBrush x:Key="Brush.Foreground.Secondary" Color="{DynamicResource Color.Foreground.Secondary}"/>
+    <SolidColorBrush x:Key="Brush.PPgram.Accent" Color="{DynamicResource Color.PPgram.Accent}"/>
+    <SolidColorBrush x:Key="Brush.PPgram.Accent.Light" Color="{DynamicResource Color.PPgram.Accent.Light}"/>
+    <SolidColorBrush x:Key="Brush.Error" Color="{DynamicResource Color.Error}"/>
+    
+    <SolidColorBrush x:Key="Brush.Focus" Color="White" />
+
+
+    <SolidColorBrush x:Key="Brush.Button.Danger" Color="{DynamicResource Color.Danger}" />
+
+    <SolidColorBrush x:Key="Brush.Text.OnAccent" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="Brush.Text.Primary" Color="#1B2230" />
+    <SolidColorBrush x:Key="Brush.Border.Subtle" Color="#CCD5E5" />
+</ResourceDictionary>
